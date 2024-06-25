@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin UI</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+<nav>
+    <ul>
+        <!-- Existing links -->
+        <li><a href="#" data-view="products">Products</a></li>
+        <li><a href="#" data-view="brands">Brands</a></li>
+        <li><a href="#" data-view="carts">Carts</a></li>
+        <li><a href="#" data-view="warehouses">Warehouses</a></li>
+        <li><a href="#" data-view="categories">Categories</a></li>
+        <li><a href="#" data-view="discounts">Discounts</a></li>
+        <li><a href="#" data-view="discount-items">Discount Items</a></li>
+        <li><a href="#" data-view="updateProcessor">Update Processor</a></li>
+    </ul>
+</nav>
+<div id="updateProcessorView" class="view">
+    <h1>Update Processor Management</h1>
+    <div class="form-container">
+        <button id="pauseProcessorButton">Pause Processor</button>
+        <button id="startProcessorButton">Start Processor</button>
+        <h2>Processor Stats</h2>
+        <div id="processorStats">
+            <p>Mode: <span id="processorMode"></span></p>
+            <p>Updates per Minute: <span id="updatesPerMinute"></span></p>
+            <p>Status: <span id="processorStatus"></span></p>
+        </div>
+    </div>
+</div>
+    <div id="loginView" class="view active">
+        <h1>Login</h1>
+        <div class="form-container">
+            <form id="loginForm">
+                <label for="username">Username:</label>
+                <input type="text" id="username" required>
+                <label for="password">Password:</label>
+                <input type="password" id="password" required>
+                <button type="submit">Login</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="productsView" class="view">
+        <h1>Product Management</h1>
+        <div class="form-container">
+            <h2>Add Product</h2>
+            <form id="addProductForm">
+                <label for="productName">Name:</label>
+                <input type="text" id="productName" required>
+                <div class="additional-fields">
+                    <label for="size">Size:</label>
+                    <input type="text" id="size">
+                    <label for="color">Color:</label>
+                    <input type="text" id="color">
+                    <label for="weight">Weight:</label>
+                    <input type="number" step="0.01" id="weight">
+                    <label for="weightUnit">Weight Unit:</label>
+                    <input type="text" id="weightUnit">
+                    <label for="width">Width:</label>
+                    <input type="number" step="0.01" id="width">
+                    <label for="height">Height:</label>
+                    <input type="number" step="0.01" id="height">
+                    <label for="categoryId">Category ID:</label>
+                    <input type="number" id="categoryId">
+                    <label for="brandId">Brand ID:</label>
+                    <input type="number" id="brandId">
+                    <label for="price">Price:</label>
+                    <input type="number" step="0.01" id="price">
+                    <label for="taxRate">Tax Rate:</label>
+                    <input type="number" step="0.01" id="taxRate">
+                </div>
+                <button type="button" class="toggle-button" onclick="toggleAdditionalFields()">Show More Fields</button>
+                <button type="submit">Add Product</button>
+            </form>
+        </div>
+        <div>
+            <h2>Product List</h2>
+            <ul id="productList"></ul>
+        </div>
+    </div>
+
+    <div class="view" id="brandsView">
+        <h1>Brand Management</h1>
+        <div class="form-container">
+            <h2>Add Brand</h2>
+            <form id="addBrandForm">
+                <label for="brandName">Name:</label>
+                <input type="text" id="brandName" required>
+                <button type="submit">Add Brand</button>
+            </form>
+        </div>
+        <div>
+            <h2>Brand List</h2>
+            <ul id="brandList"></ul>
+        </div>
+    </div>
+
+    <div class="view" id="cartsView">
+        <h1>Cart Management</h1>
+        <div class="form-container">
+            <h2>Create New Cart</h2>
+            <form id="createCartForm">
+                <button type="submit">Create Cart</button>
+            </form>
+        </div>
+        <div class="form-container">
+            <h2>Add Product to Cart</h2>
+            <form id="addOrderLineForm">
+                <label for="cartId">Cart ID:</label>
+                <input type="number" id="cartId" required>
+                <label for="productId">Product ID:</label>
+                <input type="number" id="productId" required>
+                <label for="quantity">Quantity:</label>
+                <input type="number" id="quantity" required>
+                <button type="submit">Add Product to Cart</button>
+            </form>
+        </div>
+        <div class="form-container">
+            <h2>Remove Product from Cart</h2>
+            <form id="removeOrderLineForm">
+                <label for="orderLineId">Order Line ID:</label>
+                <input type="number" id="orderLineId" required>
+                <button type="submit">Remove Product from Cart</button>
+            </form>
+        </div>
+        <div>
+            <h2>Current Carts</h2>
+            <ul id="cartList"></ul>
+        </div>
+    </div>
+
+    <div class="view" id="warehousesView">
+        <h1>Warehouse Management</h1>
+        <div class="form-container">
+            <h2>Add Warehouse</h2>
+            <form id="addWarehouseForm">
+                <label for="warehouseName">Name:</label>
+                <input type="text" id="warehouseName" required>
+                <button type="submit">Add Warehouse</button>
+            </form>
+        </div>
+        <div>
+            <h2>Warehouse List</h2>
+            <ul id="warehouseList"></ul>
+        </div>
+    </div>
+
+    <div class="view" id="categoriesView">
+        <h1>Category Management</h1>
+        <div class="form-container">
+            <h2>Add Category</h2>
+            <form id="addCategoryForm">
+                <label for="categoryName">Name:</label>
+                <input type="text" id="categoryName" required>
+                <button type="submit">Add Category</button>
+            </form>
+        </div>
+        <div>
+            <h2>Category List</h2>
+            <ul id="categoryList"></ul>
+        </div>
+    </div>
+
+    <div class="view" id="discountsView">
+        <h1>Discount Management</h1>
+        <div class="form-container">
+            <h2>Add Discount</h2>
+            <form id="addDiscountForm">
+                <label for="discountName">Name:</label>
+                <input type="text" id="discountName" required>
+                <label for="discountType">Type:</label>
+                <select id="discountType" required>
+                    <option value="percentage">Percentage</option>
+                    <option value="fixed">Fixed Amount</option>
+                </select>
+                <label for="discountValue">Value:</label>
+                <input type="number" id="discountValue" required>
+                <label for="startDate">Start Date:</label>
+                <input type="datetime-local" id="startDate">
+                <label for="endDate">End Date:</label>
+                <input type="datetime-local" id="endDate">
+                <label for="minQuantity">Minimum Quantity:</label>
+                <input type="number" id="minQuantity">
+                <button type="submit">Add Discount</button>
+            </form>
+        </div>
+        <div>
+            <h2>Discount List</h2>
+            <ul id="discountList"></ul>
+        </div>
+
+        <div class="form-container">
+            <h2>Associate Discount</h2>
+            <form id="associateDiscountForm">
+                <label for="discountId">Discount ID:</label>
+                <input type="number" id="discountId" required>
+                <label for="type">Association Type:</label>
+                <select id="associationType" required>
+                    <option value="category">Category</option>
+                    <option value="brand">Brand</option>
+                    <option value="product">Product</option>
+                </select>
+                <label for="associationId">ID:</label>
+                <input type="number" id="associationId" required>
+                <button type="submit">Associate Discount</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="cartModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal()">&times;</span>
+            <h2>Cart Details</h2>
+            <div id="cartDetails"></div>
+        </div>
+    </div>
+
+    <script>
+        function toggleAdditionalFields() {
+            const fields = document.querySelector('.additional-fields');
+            const button = document.querySelector('.toggle-button');
+            if (fields.style.display === 'none' || fields.style.display === '') {
+                fields.style.display = 'block';
+                button.textContent = 'Hide Additional Fields';
+            } else {
+                fields.style.display = 'none';
+                button.textContent = 'Show More Fields';
+            }
+        }
+
+        function openModal() {
+            document.getElementById('cartModal').style.display = 'block';
+        }
+
+        function closeModal() {
+            document.getElementById('cartModal').style.display = 'none';
+        }
+    </script>
+    <script src="script.js"></script>
+</body>
+
+</html>

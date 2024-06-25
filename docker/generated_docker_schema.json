@@ -1,0 +1,226 @@
+{
+  "services": {
+    "redis": {
+      "image": "redis:alpine",
+      "networks": [
+        "app_network"
+      ]
+    },
+    "data_stream": {
+      "build": {
+        "context": "./",
+        "dockerfile": "./Docker/Dockerfile.data_stream"
+      },
+      "ports": [
+        "3030:3030"
+      ],
+      "networks": [
+        "app_network",
+        "db_internal"
+      ],
+      "depends_on": [
+        "redis"
+      ],
+      "dockerfile_actions": [
+        [
+          "FROM",
+          "rust:latest as builder"
+        ],
+        [
+          "WORKDIR",
+          "/usr/src/data_stream"
+        ],
+        [
+          "COPY",
+          "Cargo.toml Cargo.lock ./"
+        ],
+        [
+          "COPY",
+          "src ./src"
+        ],
+        [
+          "RUN",
+          "cargo build --release --bin data_stream"
+        ],
+        [
+          "FROM",
+          "rust:latest"
+        ],
+        [
+          "WORKDIR",
+          "/usr/src/data_stream"
+        ],
+        [
+          "COPY",
+          "--from=builder /usr/src/data_stream/target/release/data_stream /usr/local/bin/data_stream"
+        ],
+        [
+          "COPY",
+          ".env ./"
+        ],
+        [
+          "COPY",
+          "../config.json ./"
+        ],
+        [
+          "ENTRYPOINT",
+          "[\"data_stream\"]"
+        ]
+      ]
+    },
+    "rest_api": {
+      "build": {
+        "context": "./",
+        "dockerfile": "./Docker/Dockerfile.rest_api"
+      },
+      "ports": [
+        "8000:8000"
+      ],
+      "env_file": [
+        ".env"
+      ],
+      "networks": [
+        "db_internal",
+        "app_network"
+      ],
+      "depends_on": [
+        "postgres"
+      ],
+      "restart": "on-failure",
+      "dockerfile_actions": [
+        [
+          "FROM",
+          "rust:latest as builder"
+        ],
+        [
+          "WORKDIR",
+          "/usr/src/rest_api"
+        ],
+        [
+          "COPY",
+          "Cargo.toml Cargo.lock ./"
+        ],
+        [
+          "COPY",
+          "src ./src"
+        ],
+        [
+          "RUN",
+          "cargo build --release --bin rest_api"
+        ],
+        [
+          "FROM",
+          "rust:latest"
+        ],
+        [
+          "WORKDIR",
+          "/usr/src/rest_api"
+        ],
+        [
+          "COPY",
+          "--from=builder /usr/src/rest_api/target/release/rest_api /usr/local/bin/rest_api"
+        ],
+        [
+          "COPY",
+          ".env ./"
+        ],
+        [
+          "COPY",
+          "../config.json ./"
+        ],
+        [
+          "ENTRYPOINT",
+          "[\"rest_api\"]"
+        ]
+      ]
+    },
+    "postgres": {
+      "image": "postgres:16.1",
+      "ports": [
+        "5432:5432"
+      ],
+      "env_file": [
+        ".env"
+      ],
+      "networks": [
+        "db_internal"
+      ],
+      "restart": "on-failure",
+      "volumes": [
+        "data:/var/lib/postgresql/data",
+        "../migrations/init/up.sql:/docker-entrypoint-initdb.d/init.sql"
+      ]
+    }
+  },
+  "networks": {
+    "app_network": {},
+    "db_internal": {
+      "internal": true
+    }
+  },
+  "volumes": {
+    "data": {}
+  },
+  "dockerfile": {
+    "schema": {
+      "set_tag": {
+        "image": {
+          "step_1": [
+            "Setting tag for data_stream",
+            "Setting tag for rest_api"
+          ]
+        },
+        "stage": {}
+      },
+      "copy": {
+        "current": {
+          "step_1": [
+            "Copying files for data_stream",
+            "Copying files for rest_api"
+          ]
+        },
+        "from": {}
+      },
+      "set_workdir": {
+        "step_1": [
+          "Setting workdir for data_stream",
+          "Setting workdir for rest_api"
+        ]
+      },
+      "run_command": {
+        "step_1": [
+          "Running commands for data_stream",
+          "Running commands for rest_api"
+        ]
+      },
+      "set_entrypoint": [
+        "Setting entrypoint for data_stream",
+        "Setting entrypoint for rest_api"
+      ]
+    },
+    "execution_order": [
+      {
+        "service": "data_stream",
+        "dockerfile": "./Docker/Dockerfile.data_stream",
+        "steps": [
+          "set_tag",
+          "set_workdir",
+          "copy",
+          "run_command",
+          "set_entrypoint"
+        ]
+      },
+      {
+        "service": "rest_api",
+        "dockerfile": "./Docker/Dockerfile.rest_api",
+        "steps": [
+          "set_tag",
+          "set_workdir",
+          "copy",
+          "run_command",
+          "set_entrypoint"
+        ]
+      }
+    ]
+  }
+}

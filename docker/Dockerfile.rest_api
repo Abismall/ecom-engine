@@ -1,0 +1,11 @@
+FROM rust:latest as builder
+WORKDIR /usr/src/rest_api
+COPY Cargo.toml Cargo.lock ./
+COPY src ./src
+RUN cargo build --release --bin rest_api
+FROM rust:latest
+WORKDIR /usr/src/rest_api
+COPY --from=builder /usr/src/rest_api/target/release/rest_api /usr/local/bin/rest_api
+COPY .env ./
+COPY ../config.json ./
+ENTRYPOINT ["rest_api"]

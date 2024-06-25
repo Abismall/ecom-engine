@@ -1,0 +1,19 @@
+{
+    "environment": "ECOM_ENVIRONMENT",
+    "rest_api": {
+        "host": "API_HOST",
+        "port": "API_PORT"
+    },
+    "redis": {
+        "redis_url": "REDIS_URL",
+        "redis_port": "REDIS_PORT",
+        "redis_host": "REDIS_HOST"
+    },
+    "postgres": {
+        "db_url": "DATABASE_URL",
+        "db_secret": "DB_SECRET",
+        "db_password": "POSTGRES_PASSWORD",
+        "db_user": "POSTGRES_USER",
+        "db_name": "POSTGRES_DB"
+    }
+}

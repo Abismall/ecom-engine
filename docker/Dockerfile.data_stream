@@ -1,0 +1,11 @@
+FROM rust:latest as builder
+WORKDIR /usr/src/data_stream
+COPY Cargo.toml Cargo.lock ./
+COPY src ./src
+RUN cargo build --release --bin data_stream
+FROM rust:latest
+WORKDIR /usr/src/data_stream
+COPY --from=builder /usr/src/data_stream/target/release/data_stream /usr/local/bin/data_stream
+COPY .env ./
+COPY ../config.json ./
+ENTRYPOINT ["data_stream"]

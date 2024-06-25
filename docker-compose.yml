@@ -1,0 +1,49 @@
+version: '3.8'
+services:
+  postgres:
+    image: postgres:16.1
+    ports:
+    - 5432:5432
+    env_file:
+    - .env
+    networks:
+    - db_internal
+    restart: on-failure
+    volumes:
+    - data:/var/lib/postgresql/data
+    - ./migrations/init/up.sql:/docker-entrypoint-initdb.d/init.sql
+  redis:
+    image: redis:alpine
+    networks:
+    - app_network
+  rest_api:
+    build:
+      context: ./
+      dockerfile: ./Docker/Dockerfile.rest_api
+    ports:
+    - 8000:8000
+    env_file:
+    - .env
+    networks:
+    - db_internal
+    - app_network
+    depends_on:
+    - postgres
+    restart: on-failure
+  data_stream:
+    build:
+      context: ./
+      dockerfile: ./Docker/Dockerfile.data_stream
+    ports:
+    - 3030:3030
+    networks:
+    - app_network
+    - db_internal
+    depends_on:
+    - redis
+networks:
+  app_network: {}
+  db_internal:
+    internal: true
+volumes:
+  data: {}
