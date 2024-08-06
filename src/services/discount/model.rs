@@ -1,4 +1,4 @@
-use crate::data::schema::discounts;
+use crate::schema::discounts;
 use chrono::NaiveDateTime;
 use diesel::{AsChangeset, Identifiable, Insertable, Queryable, Selectable};
 use serde::{Deserialize, Serialize};
@@ -17,6 +17,9 @@ use serde::{Deserialize, Serialize};
 )]
 #[diesel(table_name = discounts)]
 #[diesel(check_for_backend(diesel::pg::Pg))]
+#[diesel(belongs_to(Brand))]
+#[diesel(belongs_to(Category))]
+#[diesel(belongs_to(Product))]
 pub struct Discount {
     pub id: i32,
     pub name: String,
@@ -24,8 +27,9 @@ pub struct Discount {
     pub value: i32,
     pub start_date: chrono::NaiveDateTime,
     pub end_date: chrono::NaiveDateTime,
-    pub min_quantity: Option<i32>,
+    pub min_quantity: i32,
 }
+
 
 #[derive(Debug, Serialize, Deserialize, Insertable, Queryable, Clone)]
 #[diesel(table_name = discounts)]
@@ -39,9 +43,9 @@ pub struct NewDiscount {
 }
 
 pub mod relations {
+    use crate::schema::{discount_brands, discount_categories, discount_products};
     use crate::services::brand::model::Brand;
     use crate::services::category::model::Category;
-    use crate::data::schema::{discount_brands, discount_categories, discount_products};
     use crate::services::discount::model::Discount;
     use crate::services::product::model::Product;
     use diesel::{associations::Identifiable, Associations, Insertable, Queryable, Selectable};

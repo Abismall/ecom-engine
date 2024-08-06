@@ -1,27 +1,26 @@
 use std::sync::Arc;
 
 use actix_web::{web, App, HttpServer};
-use ecom_engine::{api::rest::local_dev_headers, cfg, data::stream::{create_add_update_route, Client, StreamChannel, StreamMode, UpdateProcessor}, logger::logger::DETAILED_FORMAT, CONFIG_FILE_PATH};
+use ecom_engine::{
+    api::rest::local_dev_headers,
+    cfg,
+    logger::logger::DETAILED_FORMAT,
+    stream::{create_add_update_route, StreamChannel, UpdateProcessor},
+    CONFIG_FILE_PATH,
+};
 use tokio::sync::{mpsc, Notify};
-
-
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     dotenv::dotenv().ok();
     std::env::set_var("RUST_LOG", "debug");
     env_logger::init();
-    let env_config: cfg::file::Env = cfg::file::Config::from_file(CONFIG_FILE_PATH).into();
+    let env_config: cfg::Env = cfg::Config::from_file(CONFIG_FILE_PATH).into();
 
     let redis_url = Arc::new(env_config.redis_url);
     let notify = Arc::new(Notify::new());
 
     let (tx, rx) = mpsc::channel(100);
-
-    let stream_client = Client {
-        mode: StreamMode::OnEvent, // Change to OnSchedule if needed
-        connection_addr: Arc::clone(&redis_url).to_string(),
-    };
 
     let processor = Arc::new(UpdateProcessor::new(redis_url.to_string()).await);
 
@@ -31,7 +30,7 @@ async fn main() -> std::io::Result<()> {
 
     tokio::spawn(async move {
         processor_clone
-            .process_updates(stream_client, product_update_channel_key, rx)
+            .process_updates(product_update_channel_key, rx)
             .await;
     });
 

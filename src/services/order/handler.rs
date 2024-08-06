@@ -1,9 +1,9 @@
-use actix_web::{web, HttpResponse, Responder, ResponseError};
+use actix_web::{web, Responder};
 use diesel::PgConnection;
 
 use crate::{
-    data::db::{execute_query_with_args, PgPool},
-    error::ConnectionPoolErrorWrapper,
+    error::DatabaseErrorWrapper,
+    postgres::{execute_query_with_args, ConnectionPool},
     ResourceIdentifierRequest,
 };
 
@@ -15,13 +15,24 @@ use super::{
 };
 
 pub async fn create_orderline(
-    pool: web::Data<PgPool>,
+    pool: web::Data<ConnectionPool>,
     payload: web::Json<NewOrderLine>,
 ) -> impl Responder {
     let params = payload.into_inner();
     match execute_query_with_args(
         pool,
-        |conn, params| insert_orderline_query(conn, params),
+        |conn, params| {
+            insert_orderline_query(
+                conn,
+                NewOrderLine::new(
+                    params.cart_id,
+                    params.product_id,
+                    Some(params.warehouse_id),
+                    params.quantity,
+                ),
+            )
+            .map_err(DatabaseErrorWrapper)
+        },
         params,
     )
     .await
@@ -31,13 +42,13 @@ pub async fn create_orderline(
     }
 }
 pub async fn get_orderline(
-    pool: web::Data<PgPool>,
+    pool: web::Data<ConnectionPool>,
     payload: web::Path<ResourceIdentifierRequest>,
 ) -> impl Responder {
     let params = payload.into_inner();
     match execute_query_with_args(
         pool,
-        |conn, params| select_orderline_query(conn, params.id),
+        |conn, params| select_orderline_query(conn, params.id).map_err(DatabaseErrorWrapper),
         params,
     )
     .await
@@ -54,16 +65,18 @@ pub async fn update_orderline(
     let params: OrderLine = payload.into_inner();
     match execute_query_with_args(
         pool,
-        |conn, params| match select_orderline_query(conn, params.id) {
+        |conn, params| match select_orderline_query(conn, params.id).map_err(DatabaseErrorWrapper) {
             Ok(existing_orderline) => set_orderline_query(
                 conn,
                 OrderLine {
                     id: existing_orderline.id,
                     cart_id: existing_orderline.cart_id,
                     product_id: params.product_id,
+                    warehouse_id: params.warehouse_id,
                     quantity: params.quantity,
                 },
-            ),
+            )
+            .map_err(DatabaseErrorWrapper),
             Err(e) => Err(e),
         },
         params,
@@ -76,13 +89,13 @@ pub async fn update_orderline(
 }
 
 pub async fn delete_orderline(
-    pool: web::Data<PgPool>,
+    pool: web::Data<ConnectionPool>,
     payload: web::Path<ResourceIdentifierRequest>,
 ) -> impl Responder {
     let params = payload.into_inner();
     match execute_query_with_args(
         pool,
-        |conn, params| delete_orderline_query(conn, params.id),
+        |conn, params| delete_orderline_query(conn, params.id).map_err(DatabaseErrorWrapper),
         params,
     )
     .await

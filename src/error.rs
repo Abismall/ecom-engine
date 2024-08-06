@@ -2,7 +2,7 @@ use actix_web::{HttpResponse, ResponseError};
 use diesel::result::Error as DieselError;
 use r2d2::Error as R2d2Error;
 use redis::RedisError;
-use std::fmt;
+use std::{ffi::NulError, fmt};
 use thiserror::Error;
 
 pub mod message {
@@ -268,6 +268,7 @@ impl From<ConnectionPoolErrorWrapper> for HttpResponse {
         error.error_response()
     }
 }
+
 impl From<ConnectionPoolErrorWrapper> for DatabaseErrorWrapper {
     fn from(error: ConnectionPoolErrorWrapper) -> Self {
         DatabaseErrorWrapper(DieselError::DatabaseError(

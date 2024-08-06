@@ -1,24 +1,6 @@
 
 
 
-
-
-### Generate Docker Files
-
-Run the Python script to generate the necessary Docker files.
-
-```sh
-python ./docker/generate_docker_files.py
-```
-
-### Build and Run the Docker Containers
-
-Use Docker Compose to build and run the containers defined in the `compose.json` file.
-
-```sh
-docker-compose -f ./docker/compose.json up --build
-```
-
 ### Send update to stream
 
 You can add a discount using a `POST` request to the `/discount` endpoint.
@@ -61,48 +43,3 @@ curl -X POST http://127.0.0.1:8000/discount \
 }'
 
 ```
-
-## Additional Commands
-
-Here are some additional commands that might be useful during development:
-
-### Stop the Docker Containers
-
-To stop the running Docker containers:
-
-```sh
-docker-compose -f ./docker/compose.json down
-```
-
-### View Docker Logs
-
-To view the logs of the running containers:
-
-```sh
-docker-compose -f ./docker/compose.json logs
-```
-
-### Rebuild the Containers
-
-If you make changes to the Docker configuration or the code, you might need to rebuild the containers:
-
-```sh
-docker-compose -f ./docker/compose.json up --build
-```
-
-### Remove Docker Images
-
-To remove all Docker images related to the project:
-
-```sh
-docker-compose -f ./docker/compose.json down --rmi all
-```
-
-### Prune Docker System
-
-To prune the Docker system and remove all unused containers, networks, images, and optionally, volumes:
-
-```sh
-docker system prune -a
-```
-

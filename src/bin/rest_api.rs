@@ -1,49 +1,31 @@
 use actix_web::{web, App};
+use ecom_engine::api::rest::{resolve_connection_pool, DEFAULT_PORT};
 use ecom_engine::logger::logger::DETAILED_FORMAT;
 use ecom_engine::{
-    api::rest::{local_dev_cors, local_dev_headers, pg_r2d2_connection_pool},
-    services::brand::service::configure as brand_service,
-    services::cart::service::configure as cart_service,
-    services::discount::service::configure as discount_service,
-    services::order::service::configure as order_service,
-    services::product::service::configure as product_service,
+    api::rest::{local_dev_cors, local_dev_headers},
+    services::brand::service::configure as brand,
+    services::cart::service::configure as cart,
+    services::discount::service::configure as discount,
+    services::order::service::configure as order,
+    services::product::service::configure as product,
+    services::stock::service::configure as stock,
 };
-async fn index() -> actix_web::HttpResponse {
-    actix_web::HttpResponse::Ok().json("Hello, RestApiService!")
-}
-
-const DB_CON_RETRY_ATTEMPTS: u8 = 3;
 
 #[actix_web::main]
 async fn main() -> Result<(), std::io::Error> {
     dotenv::dotenv().ok(); // Load environment variables from .env file
-    
+
     env_logger::init();
-    let cfg = ecom_engine::cfg::file::Config::from_file("config.json");
-    let env = ecom_engine::cfg::file::Env::from_config(&cfg.clone());
+    let cfg = ecom_engine::cfg::Config::from_file("config.json");
+    let env = ecom_engine::cfg::Env::from_config(&cfg.clone());
     let host_clone = env.api_host.clone();
     let port_clone = env.api_port.clone();
-    let mut attempts = 0;
-    let pool = loop {
-        match pg_r2d2_connection_pool(&env.db_url) {
-            Ok(pool) => break pool,
-            Err(err) => {
-                attempts += 1;
-                if attempts >= DB_CON_RETRY_ATTEMPTS {
-                    log::error!(
-                        "An error occurred while creating the database connection pool: {}",
-                        err
-                    );
-                    std::process::exit(1);
-                } else {
-                    log::warn!("Attempt {} failed, retrying...", attempts);
-                    tokio::time::sleep(tokio::time::Duration::from_secs(5)).await;
-                }
-            }
-        }
-    };
+    let pool = resolve_connection_pool(&env.db_url).await;
 
     actix_web::HttpServer::new(move || {
+        let logger = actix_web::middleware::Logger::new(DETAILED_FORMAT);
+        let pool_clone = pool.clone();
+        let pool_app_data = web::Data::new(pool_clone);
         let cors = match env.api_host.as_str() {
             "localhost" | "0.0.0.0" | "127.0.0.1" => local_dev_cors(),
             _ => actix_cors::Cors::default()
@@ -58,18 +40,18 @@ async fn main() -> Result<(), std::io::Error> {
         };
 
         App::new()
-            .route("/", web::get().to(index))
             .wrap(cors)
             .wrap(headers)
-            .wrap(actix_web::middleware::Logger::new(DETAILED_FORMAT))
-            .configure(brand_service)
-            .configure(product_service)
-            .configure(cart_service)
-            .configure(discount_service)
-            .configure(order_service)
-            .app_data(web::Data::new(pool.clone()))
+            .wrap(logger)
+            .configure(brand)
+            .configure(product)
+            .configure(cart)
+            .configure(discount)
+            .configure(order)
+            .configure(stock)
+            .app_data(pool_app_data)
     })
-    .bind((host_clone, port_clone.parse::<u16>().unwrap()))?
+    .bind((host_clone, port_clone.parse::<u16>().unwrap_or(DEFAULT_PORT)))?
     .run()
     .await
 }

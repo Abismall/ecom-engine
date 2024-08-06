@@ -1,7 +1,10 @@
 use actix_web::{web, HttpResponse, Responder, ResponseError};
 use diesel::PgConnection;
 
-use crate::{error::ConnectionPoolErrorWrapper, ResourceIdentifierRequest};
+use crate::{
+    error::{ConnectionPoolErrorWrapper, DatabaseErrorWrapper},
+    ResourceIdentifierRequest,
+};
 
 use super::{
     model::Cart,
@@ -17,7 +20,7 @@ pub async fn create_cart(
     match pool.get() {
         Ok(mut conn) => match insert_cart_query(&mut conn) {
             Ok(cart) => HttpResponse::Ok().json(cart),
-            Err(e) => e.into(), // Use the error_response method from ResponseError
+            Err(e) => DatabaseErrorWrapper(e).into(), // Use the error_response method from ResponseError
         },
         Err(e) => ConnectionPoolErrorWrapper(e).error_response(),
     }
@@ -38,9 +41,9 @@ pub async fn update_cart(
                 },
             ) {
                 Ok(updated_cart) => HttpResponse::Ok().json(updated_cart),
-                Err(e) => e.into(),
+                Err(e) => DatabaseErrorWrapper(e).into(),
             },
-            Err(e) => e.into(),
+            Err(e) => DatabaseErrorWrapper(e).into(),
         },
         Err(e) => ConnectionPoolErrorWrapper(e).error_response(),
     }
@@ -53,7 +56,7 @@ pub async fn get_cart(
     match pool.get() {
         Ok(mut conn) => match select_cart_query(&mut conn, path.into_inner().id) {
             Ok(cart_option) => HttpResponse::Ok().json(cart_option),
-            Err(e) => e.into(),
+            Err(e) => DatabaseErrorWrapper(e).into(),
         },
         Err(e) => ConnectionPoolErrorWrapper(e).error_response(),
     }
@@ -65,7 +68,7 @@ pub async fn list_carts_with_orderlines(
     match pool.get() {
         Ok(mut conn) => match list_carts_with_orderlines_query(&mut conn).await {
             Ok(cart) => HttpResponse::Ok().json(cart),
-            Err(e) => e.into(),
+            Err(e) => DatabaseErrorWrapper(e).into(),
         },
         Err(e) => ConnectionPoolErrorWrapper(e).error_response(),
     }
@@ -78,7 +81,7 @@ pub async fn delete_cart(
     match pool.get() {
         Ok(mut conn) => match delete_cart_query(&mut conn, path.into_inner().id) {
             Ok(cart) => HttpResponse::Ok().json(cart),
-            Err(e) => e.into(),
+            Err(e) => DatabaseErrorWrapper(e).into(),
         },
         Err(e) => ConnectionPoolErrorWrapper(e).error_response(),
     }

@@ -1,5 +1,5 @@
-use crate::data::schema::categories;
-use diesel::{AsChangeset, Insertable, Queryable, Selectable, Identifiable};
+use crate::schema::categories;
+use diesel::{AsChangeset, Identifiable, Insertable, Queryable, Selectable};
 use serde::{Deserialize, Serialize};
 
 #[derive(

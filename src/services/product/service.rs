@@ -1,8 +1,8 @@
 use super::handler::create_product;
 use super::handler::delete_product;
 use super::handler::get_product;
+use super::handler::list_full_products;
 use super::handler::list_products;
-use super::handler::list_products_with_discount;
 use super::handler::list_products_with_stock;
 use super::handler::update_product;
 
@@ -12,7 +12,7 @@ pub fn configure(cfg: &mut actix_web::web::ServiceConfig) {
     cfg.service(
         scope("/product")
             .route("", post().to(create_product))
-            .route("", get().to(list_products_with_discount))
+            .route("", get().to(list_full_products))
             .route("", put().to(update_product))
             .route("/{id}", get().to(get_product))
             .route("/{id}", delete().to(delete_product))

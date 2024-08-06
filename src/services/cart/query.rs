@@ -1,63 +1,52 @@
-use crate::error::DatabaseErrorWrapper;
+use crate::postgres::PooledConnection;
 use crate::services::discount::utils::sort_discounts_by_start_date_desc;
 use crate::services::order::query::load_orderlines_query;
 use crate::services::order::utils::map_orderlines_to_carts;
 use diesel::prelude::*;
-use diesel::{PgConnection, QueryDsl, RunQueryDsl};
-use r2d2::PooledConnection;
+use diesel::{QueryDsl, RunQueryDsl};
 
 use super::model::{Cart, CartWithOrderLines};
 
-fn load_carts_query(
-    connection: &mut PooledConnection<diesel::r2d2::ConnectionManager<PgConnection>>,
-) -> Result<Vec<Cart>, DatabaseErrorWrapper> {
-    use crate::data::schema::carts::dsl::*;
-    carts.load::<Cart>(connection).map_err(DatabaseErrorWrapper)
+fn load_carts_query(connection: &mut PooledConnection) -> Result<Vec<Cart>, diesel::result::Error> {
+    use crate::schema::carts::dsl::*;
+    carts.load::<Cart>(connection)
 }
 
-pub fn insert_cart_query(
-    connection: &mut PooledConnection<diesel::r2d2::ConnectionManager<PgConnection>>,
-) -> Result<Cart, DatabaseErrorWrapper> {
-    diesel::insert_into(crate::data::schema::carts::table)
+pub fn insert_cart_query(connection: &mut PooledConnection) -> Result<Cart, diesel::result::Error> {
+    diesel::insert_into(crate::schema::carts::table)
         .values(&Cart {
             id: chrono::Utc::now().timestamp() as i32,
             is_active: true,
         })
         .get_result::<Cart>(connection)
-        .map_err(DatabaseErrorWrapper)
 }
 pub fn set_cart_query(
-    connection: &mut PooledConnection<diesel::r2d2::ConnectionManager<PgConnection>>,
+    connection: &mut PooledConnection,
     updated_cart: Cart,
-) -> Result<Cart, DatabaseErrorWrapper> {
-    diesel::update(crate::data::schema::carts::table.find(updated_cart.id))
+) -> Result<Cart, diesel::result::Error> {
+    diesel::update(crate::schema::carts::table.find(updated_cart.id))
         .set(&updated_cart)
         .get_result::<Cart>(connection)
-        .map_err(DatabaseErrorWrapper)
 }
 pub fn select_cart_query(
-    connection: &mut PooledConnection<diesel::r2d2::ConnectionManager<PgConnection>>,
+    connection: &mut PooledConnection,
     discount_id: i32,
-) -> Result<Cart, DatabaseErrorWrapper> {
-    crate::data::schema::carts::table
+) -> Result<Cart, diesel::result::Error> {
+    crate::schema::carts::table
         .select(Cart::as_select())
-        .filter(crate::data::schema::carts::id.eq(discount_id))
+        .filter(crate::schema::carts::id.eq(discount_id))
         .first::<Cart>(connection)
-        .map_err(DatabaseErrorWrapper)
 }
 pub fn delete_cart_query(
-    connection: &mut PooledConnection<diesel::r2d2::ConnectionManager<PgConnection>>,
+    connection: &mut PooledConnection,
     cart_id: i32,
-) -> Result<usize, DatabaseErrorWrapper> {
-    diesel::delete(
-        crate::data::schema::carts::table.filter(crate::data::schema::carts::id.eq(cart_id)),
-    )
-    .execute(connection)
-    .map_err(DatabaseErrorWrapper)
+) -> Result<usize, diesel::result::Error> {
+    diesel::delete(crate::schema::carts::table.filter(crate::schema::carts::id.eq(cart_id)))
+        .execute(connection)
 }
 pub async fn list_carts_with_orderlines_query(
-    connection: &mut PooledConnection<diesel::r2d2::ConnectionManager<PgConnection>>,
-) -> Result<Vec<CartWithOrderLines>, DatabaseErrorWrapper> {
+    connection: &mut PooledConnection,
+) -> Result<Vec<CartWithOrderLines>, diesel::result::Error> {
     let cart_vector = load_carts_query(connection)?;
     let orderline_in_cart_vector =
         load_orderlines_query(connection, sort_discounts_by_start_date_desc).unwrap();
@@ -67,14 +56,14 @@ pub async fn list_carts_with_orderlines_query(
     ))
 }
 
-// fn load_carts_query(connection: &mut PooledConnection<diesel::r2d2::ConnectionManager<PgConnection>>) -> Result<Vec<Cart>, AppError> {
-//     use crate::data::schema::carts::dsl::*;
+// fn load_carts_query(connection: &mut PooledConnection) -> Result<Vec<Cart>, AppError> {
+//     use crate::schema::carts::dsl::*;
 //     let carts_result = carts.load::<Cart>(connection)?;
 //     Ok(carts_result)
 // }
 
 // pub fn list_carts_with_orderlines(
-//     connection: &mut PooledConnection<diesel::r2d2::ConnectionManager<PgConnection>>,
+//     connection: &mut PooledConnection,
 // ) -> Result<Vec<CartWithOrderLines>, AppError> {
 //     let cart_vector = load_carts_query(connection)?;
 //     let orderline_in_cart_vector = load_orderlines_query(

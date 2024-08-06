@@ -1,4 +1,4 @@
-use crate::{data::schema::carts, services::order::model::OrderLineInCart};
+use crate::{schema::carts, services::order::model::OrderLineInCart};
 use diesel::{AsChangeset, Identifiable, Insertable, Queryable, Selectable};
 use serde::{Deserialize, Serialize};
 

@@ -6,37 +6,10 @@ use actix_web::middleware::DefaultHeaders;
 use diesel::{r2d2::ConnectionManager, PgConnection};
 use r2d2::Pool;
 
-pub trait Localhost {
-    fn is_localhost(&self) -> bool;
-    fn as_str(&self) -> &str;
-}
+use crate::postgres::ConnectionPool;
 
-impl Localhost for String {
-    fn is_localhost(&self) -> bool {
-        matches!(self.as_str(), "localhost" | "127.0.0.1" | "0.0.0.0")
-    }
-
-    fn as_str(&self) -> &str {
-        self.as_str()
-    }
-}
-
-impl<'a> Localhost for &'a str {
-    fn is_localhost(&self) -> bool {
-        matches!(*self, "localhost" | "127.0.0.1" | "0.0.0.0")
-    }
-
-    fn as_str(&self) -> &str {
-        self
-    }
-}
-
-// Implementing Display for the Localhost trait
-impl std::fmt::Display for dyn Localhost + '_ {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.as_str())
-    }
-}
+pub const DB_CON_RETRY_ATTEMPTS: u8 = 3;
+pub const DEFAULT_PORT: u16 = 8080;
 
 #[derive(Clone, Debug)]
 pub struct RestApiHandler;
@@ -86,4 +59,24 @@ pub fn local_dev_headers() -> DefaultHeaders {
         .add((AUTHORIZATION, HeaderValue::from_static("Bearer")))
         .add((CACHE_CONTROL, HeaderValue::from_static("no-cache")))
         .add((ACCESS_CONTROL_ALLOW_ORIGIN, HeaderValue::from_static("*")))
+}
+
+pub async fn resolve_connection_pool(url: &str) -> ConnectionPool {
+    let mut attempts = 0;
+    let pool = loop {
+        match crate::api::rest::pg_r2d2_connection_pool(url) {
+            Ok(pool) => break pool,
+            Err(err) => {
+                attempts += 1;
+                if attempts >= DB_CON_RETRY_ATTEMPTS {
+                    log::error!("Failed to create connection pool: {}", err);
+                    std::process::exit(1);
+                } else {
+                    log::warn!("Create connection attempt {} failed, retrying...", attempts);
+                    tokio::time::sleep(tokio::time::Duration::from_secs(5)).await;
+                }
+            }
+        }
+    };
+    pool
 }

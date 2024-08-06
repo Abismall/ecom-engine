@@ -1,4 +1,4 @@
-use crate::data::schema::brands;
+use crate::schema::brands;
 use diesel::{AsChangeset, Identifiable, Insertable, Queryable, Selectable};
 use serde::{Deserialize, Serialize};
 

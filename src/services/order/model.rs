@@ -16,7 +16,7 @@ use serde::{Deserialize, Serialize};
     Associations,
     Clone,
 )]
-#[diesel(table_name = crate::data::schema::order_lines)]
+#[diesel(table_name = crate::schema::order_lines)]
 #[diesel(check_for_backend(diesel::pg::Pg))]
 #[diesel(belongs_to(Cart))]
 #[diesel(belongs_to(Product))]
@@ -24,6 +24,7 @@ pub struct OrderLine {
     pub id: i32,
     pub cart_id: i32,
     pub product_id: i32,
+    pub warehouse_id: i32,
     pub quantity: i32,
 }
 
@@ -71,17 +72,43 @@ impl OrderLineInCart {
         }
     }
 }
-
-#[derive(Queryable, Selectable, Debug, PartialEq, Serialize, Deserialize, Insertable, Clone)]
+fn default_warehouse_id() -> i32 {
+    1
+}
+#[derive(
+    Queryable,
+    Selectable,
+    Debug,
+    PartialEq,
+    Serialize,
+    Deserialize,
+    Insertable,
+    AsChangeset,
+    Associations,
+    Clone,
+)]
+#[diesel(table_name = crate::schema::order_lines)]
 #[diesel(check_for_backend(diesel::pg::Pg))]
-#[diesel(table_name = crate::data::schema::order_lines)]
+#[diesel(belongs_to(Cart))]
+#[diesel(belongs_to(Product))]
 pub struct NewOrderLine {
     pub cart_id: i32,
     pub product_id: i32,
+    #[serde(default = "default_warehouse_id")]
+    pub warehouse_id: i32,
     pub quantity: i32,
 }
-
-use crate::data::schema::warehouses;
+impl NewOrderLine {
+    pub fn new(cart_id: i32, product_id: i32, warehouse_id: Option<i32>, quantity: i32) -> Self {
+        Self {
+            cart_id,
+            product_id,
+            warehouse_id: warehouse_id.or(Some(1)).unwrap(),
+            quantity,
+        }
+    }
+}
+use crate::schema::warehouses;
 
 #[derive(
     Queryable, Selectable, Identifiable, Debug, PartialEq, Serialize, Deserialize, Insertable,
@@ -93,8 +120,8 @@ pub struct Warehouse {
     pub name: String,
 }
 
-#[derive(Insertable)]
+#[derive(Serialize, Deserialize, Insertable)]
 #[diesel(table_name = warehouses)]
-pub struct NewWarehouse<'a> {
-    pub name: &'a String,
+pub struct NewWarehouse {
+    pub name: String,
 }
